@@ -74,11 +74,15 @@ module.exports = {
    * @returns (Buffer|String) 明文
    */
   aesDecrypt: function (data, key, iv, inputEncoding, outputEncoding,zeroPadding) {
+    //非buffer转成buffer对象
+    if (!(data instanceof Buffer)){
+      data = new Buffer(data,inputEncoding);
+    }
     var decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
     if (zeroPadding == true) {
       decipher.setAutoPadding(false)
     }
-    var bufArr = [decipher.update(data, inputEncoding)];
+    var bufArr = [decipher.update(data)];
     bufArr.push(decipher.final());
     var decrypted = Buffer.concat(bufArr);
     if (outputEncoding == 'binary' || outputEncoding == 'ascii' || outputEncoding == 'utf8') {
