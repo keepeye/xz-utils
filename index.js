@@ -38,9 +38,20 @@ module.exports = {
    * @param outputEncoding 返回密文的格式,可以是'binary', 'base64' 或者 'hex',若未指定则返回Buffer
    * @returns (Buffer|String) 密文
    */
-  aesEncrypt: function (data, key, iv, inputEncoding, outputEncoding) {
+  aesEncrypt: function (data, key, iv, inputEncoding, outputEncoding,zeroPadding) {
+    //非buffer转成buffer对象
+    if (!(data instanceof Buffer)){
+      data = new Buffer(data,inputEncoding);
+    }
     var cipher = crypto.createCipheriv('aes-128-cbc', key, iv);
-    var bufArr = [cipher.update(data, inputEncoding)];
+    //关闭自动补码,使用0x0进行补码
+    if (zeroPadding == true) {
+      cipher.setAutoPadding(false);
+      var padding = new Array(128 - data.length % 128);
+      padding.fill(0x0);
+      data = Buffer.concat([data,new Buffer(padding)]);
+    }
+    var bufArr = [cipher.update(data)];
     bufArr.push(cipher.final());
     var encrypted = Buffer.concat(bufArr);
     if (outputEncoding == 'binary' || outputEncoding == 'hex' || outputEncoding == 'base64') {
@@ -62,8 +73,11 @@ module.exports = {
    * @param outputEncoding 返回密文的格式,可以是'binary', 'ascii' 或者 'utf8',若未指定则返回Buffer
    * @returns (Buffer|String) 明文
    */
-  aesDecrypt: function (data, key, iv, inputEncoding, outputEncoding) {
+  aesDecrypt: function (data, key, iv, inputEncoding, outputEncoding,zeroPadding) {
     var decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
+    if (zeroPadding == true) {
+      decipher.setAutoPadding(false)
+    }
     var bufArr = [decipher.update(data, inputEncoding)];
     bufArr.push(decipher.final());
     var decrypted = Buffer.concat(bufArr);
